@@ -1,0 +1,8 @@
+{
+	"name": "sm.hoist.modules",
+	"version": "0.1.0",
+	"scripts": {
+		"install": "cd client/01-System ; npm install ; cd ../02-Libraries ; npm install ; ../../server ; npm install",
+		"run": "node server/01-System.js"
+	}
+}
