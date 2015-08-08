@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "private": true,
+  "dependencies": {
+    "babel": "^5.8.21",
+    "bluebird": "^2.9.34",
+    "body-parser": "^1.13.3",
+    "browserify": "^11.0.1",
+    "compression": "^1.5.2",
+    "defs": "^1.1.0",
+    "express": "^4.13.3",
+    "extend": "^3.0.0",
+    "morgan": "^1.6.1",
+    "node-forge": "^0.6.34",
+    "send": "^0.13.0",
+    "systemjs": "^0.18.8"
+  },
+  "scripts": {
+    "postinstall": "cd node_modules/node-forge ; npm install ; npm run minify"
+  }
+}

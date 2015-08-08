@@ -1,0 +1,16 @@
+{
+  "name": "02-Libraries",
+  "private": true,
+  "dependencies": {
+    "canonical-json": "0.0.4",
+    "jsonwebtoken": "^5.0.4",
+    "jssha": "^2.0.1",
+    "lodash-compat": "^3.10.1",
+    "moment": "^2.10.6",
+    "numeral": "^1.5.3",
+    "page": "^1.6.3",
+    "path-browserify": "0.0.0",
+    "react": "^0.13.3",
+    "uuid": "^2.0.1"
+  }
+}
