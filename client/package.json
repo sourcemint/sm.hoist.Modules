@@ -7,85 +7,106 @@
 			},
 			"packages": {
 
+				"build": {
+					"main": "all.js",					
+					"format": "cjs",
+					"fsPath": "../build"
+				},
+
 				"runtime": {
 					"main": "client.js",					
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../runtime"
 				},
 
 				"resources/layer": {
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client"
 				},
 
 				"components/HelloWorld": {
 					"main": "index.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/02-Components/HelloWorld"
 				},
 
 				"resources/console-polyfill": {
 					"main": "index.js",
-					"format": "global"
+					"format": "global",
+					"fsPath": "../runtime/node_modules/console-polyfill"
 				},
 				"resources/es5-shim": {
-					"format": "global"
+					"format": "global",
+					"fsPath": "../runtime/node_modules/es5-shim"
 				},
 				"resources/html5shiv": {
 					"main": "html5shiv.js",
-					"format": "global"
+					"format": "global",
+					"fsPath": "../client/01-Libraries/node_modules/html5shiv/dist"
 				},
 				"resources/json": {
 					"main": "json3.js",
-					"format": "global"
+					"format": "cjs",
+					"fsPath": "../runtime/node_modules/json3/lib"
 				},
 				"resources/lodash": {
 					"main": "index.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/lodash-compat"
 				},
 				"resources/jquery": {
 					"main": "jquery.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/jquery/dist"
 				},
 				"resources/bluebird": {
 					"main": "bluebird.js",
-					"format": "cjs"
-				},
-				"resources/extend": {
-					"main": "index.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../server/node_modules/bluebird/js/browser"
 				},
 				"resources/path": {
 					"main": "index.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/path-browserify"
 				},
 				"resources/browser-builtins": {
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/browser-builtins/builtin"
 				},
 				"resources/canonical-json": {
 					"main": "index.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/canonical-json"
 				},
 				"resources/forge": {
 					"main": "forge.min.js",
-					"format": "amd"
+					"format": "amd",
+					"fsPath": "../server/node_modules/node-forge/js"
 				},
 				"resources/moment": {
 					"main": "moment.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/moment"
 				},
 				"resources/numeral": {
 					"main": "numeral.js",
-					"format": "cjs"
+					"format": "cjs",
+					"fsPath": "../client/01-Libraries/node_modules/numeral"
 				},
 				"resources/page": {
 					"main": "page.js",
-					"format": "global"
+					"format": "global",
+					"fsPath": "../client/01-Libraries/node_modules/page"
 				},
 				"resources/uuid": {
 					"main": "uuid.js",
-					"format": "amd"
+					"format": "amd",
+					"fsPath": "../client/01-Libraries/node_modules/uuid"
 				},
 				"resources/react": {
 					"main": "react.js",
-					"format": "global"
+					"format": "global",
+					"fsPath": "../client/01-Libraries/node_modules/react/dist"
 				}
 			}
 		}

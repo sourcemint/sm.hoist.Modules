@@ -24,7 +24,8 @@ process.env.BLUEBIRD_DEBUG = "1";
 const DEPS = {
 	'stream': require('stream'),
 	'path': require('path'),
-	'fs': require('fs'),
+	'fs': require('fs-extra'),
+	'qfs': require('q-io/fs'),
 	'extend': require('extend'),
 	'bluebird': require('bluebird'),
 	'lodash': require('lodash')
@@ -62,11 +63,13 @@ Context.prototype.wrap = function (instanceImplementationModule, instanceDescrip
 
 	if (CONTEXT.VERBOSE) console.info(("Init layer '" + layerId + "' with config: " + JSON.stringify(CONTEXT.config, null, 4)).info);
 
-	return new instanceFactory(CONTEXT);
+	return CONTEXT.DEPS.bluebird.resolve().then(function () {
+		return new instanceFactory(CONTEXT);
+	});
 }
 
 
-DEPS['bluebird'].attempt(function () {
+exports.run = function (method) {
 
 	return require('./02-Server.js').for(new Context({
 
@@ -91,14 +94,20 @@ DEPS['bluebird'].attempt(function () {
 			).config["github.com~systemjs/0/System.config"]
 		}
 
-	}));
+	})).then(function (api) {
 
-}).then(function (api) {
+		return api[method]();
 
-	return api.start();
+	});
+}
 
-}).catch(function (err) {
-	console.error(("Got Systems ERROR:").error, ("" + (err.stack || err)).error);
-	process.exit(1);
-});
+
+if (require.main === module) {
+	DEPS['bluebird'].attempt(function () {
+		return exports.run("start");
+	}).catch(function (err) {
+		console.error(("Got Systems ERROR:").error, ("" + (err.stack || err)).error);
+		process.exit(1);
+	});		
+}
 

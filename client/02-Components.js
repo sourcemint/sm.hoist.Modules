@@ -1,10 +1,10 @@
 
-exports['for'] = function (CONTEXT) {
+module.exports = function (CONTEXT) {
 
 	return CONTEXT.wrap(module, {
-		'deps': [
-			'components/HelloWorld'
-		]
+		'deps': {
+			'HelloWorld': require('components/HelloWorld')
+		}
 	}, Factory);
 }
 

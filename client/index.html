@@ -22,43 +22,24 @@
 				}
 			}
 
-			System['import']('runtime').then(function (runtime) {
+			System['import']('runtime').then(function (runtimeFactory) {
 
-				return runtime.loadLayer('resources/layer/01-Libraries.js').then(function (systemFactoryApi) {
+				return runtimeFactory({
 
-					return systemFactoryApi['for'](new runtime.Context({
+					VERBOSE: true,
+					DEBUG: true
 
-						VERBOSE: true,
-						DEBUG: true
+				}).then(function (runtimeContext) {
 
-					}));
-				}).then(function (librariesContext) {
+					return runtimeContext.loadLayers([
+						'resources/layer/01-Libraries.js',
+						'resources/layer/02-Components.js'
+					]).then(function (appContext) {
 
-					return runtime.loadLayer('resources/layer/02-Components.js').then(function (factoryApi) {
-
-						return factoryApi['for'](new runtime.Context({
-
-							VERBOSE: librariesContext.VERBOSE,
-							DEBUG: librariesContext.DEBUG,
-
-							DEPS: librariesContext.DEPS,
-
-							API: librariesContext.API,
-
-							config: {
-								"/03-Components": {
-									foo: "bar 2"
-								}
-							}
-
-						}));
-
-					}).then(function (componentsContext) {
-
-
-P("All loaded OK!");
+P("All loaded OK!", appContext);
 
 					});
+
 				});
 
 			})['catch'](logError);

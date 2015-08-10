@@ -5,7 +5,7 @@ require("resources/es5-shim/es5-shim.js");
 require("resources/es5-shim/es5-sham.js");
 
 
-var Context = exports.Context = function (CONTEXT) {
+var Context = function (CONTEXT) {
 	for (var name in CONTEXT) {
 		this[name] = CONTEXT[name];
 	}
@@ -21,12 +21,10 @@ Context.prototype.wrap = function (instanceImplementationModule, instanceDescrip
 
 	function ensureDependencies() {
 		if (!instanceDescriptor.deps) return Promise.resolve();
-		return Promise.all(instanceDescriptor.deps.map(function (uri) {
-			// NOTE: Using 'System.import' will break old browsers
-			return System['import'](uri).then(function (api) {
-				CONTEXT.DEPS[uri.split("/").slice(1).join("/")] = api;
-			});
-		}));
+		Object.keys(instanceDescriptor.deps).forEach(function (alias) {
+			CONTEXT.DEPS[alias] = instanceDescriptor.deps[alias];
+		});
+		return Promise.resolve();
 	}
 
 	return ensureDependencies().then(function () {
@@ -40,10 +38,54 @@ Context.prototype.wrap = function (instanceImplementationModule, instanceDescrip
 		return new instanceFactory(CONTEXT);
 	});
 }
+Context.prototype.clone = function () {
+	return (new Context({
+		VERBOSE: this.VERBOSE,
+		DEBUG: this.DEBUG,
+		DEPS: this.DEPS,
+		API: this.API,
+		config: this.config
+	}));
+}
 
 
-exports.loadLayer = function (uri) {
+module.exports = function (context) {
+	var CONTEXT = new Context(context);
+	return CONTEXT.wrap(module, {}, function (CONTEXT) {
 
-	return System['import'](uri);
+		CONTEXT.loadLayer = function (uri) {
+
+			return System['import'](uri);
+		}
+
+		CONTEXT.loadLayers = function (uris) {
+
+			var prevPromise = Promise.resolve();
+
+			var ctx = this;
+			uris.forEach(function (uri) {
+				prevPromise = prevPromise.then(function() {
+
+					return CONTEXT.loadLayer(uri).then(function (factory) {
+
+						return factory(ctx.clone());
+
+					}).then(function (_ctx) {
+
+						ctx = _ctx;
+					});
+				})['catch'](function (err) {
+					console.error("Error loading layer '" + uri + "':", err.stack || err.message);
+					throw err;
+				});
+			});
+
+			return prevPromise.then(function () {
+
+			});
+		}
+
+		return CONTEXT;
+	});
 }
 

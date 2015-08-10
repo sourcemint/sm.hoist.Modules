@@ -11,7 +11,8 @@ exports.for = function (CONTEXT) {
 			'defs',
 			'browserify',
 			'babel',
-			'escape-regexp-component'
+			'escape-regexp-component',
+			'request'
 		]
 	}, Factory);
 }
@@ -80,6 +81,7 @@ function Factory (CONTEXT) {
 		"extend": "server/node_modules/extend",
 		"path": "client/01-Libraries/node_modules/path-browserify",
 
+		"build": "build",
 		"runtime": "runtime",
 		"layer": "client",
 
@@ -92,6 +94,10 @@ function Factory (CONTEXT) {
 		"page": "client/01-Libraries/node_modules/page",
 		"uuid": "client/01-Libraries/node_modules/uuid",
 		"react": "client/01-Libraries/node_modules/react/dist"
+	};
+
+	const CONVERT_DEFS = {
+
 	};
 
 
@@ -129,11 +135,21 @@ function Factory (CONTEXT) {
 		return data.src;
 	}
 
-	function serveStaticFile (fullPath, res, next) {
+	function storeInDistribution (uri, data) {
+		var distPath = DEPS.path.join(__dirname, "../build/dist", uri);
+		if (!DEPS.fs.existsSync(DEPS.path.dirname(distPath))) {
+			DEPS.fs.mkdirsSync(DEPS.path.dirname(distPath));
+		}
+		DEPS.fs.outputFileSync(distPath, data, "utf8");
+	}
+
+	function serveStaticFile (uri, fullPath, res, next, options) {
 		// TODO: Use async.
 		if (!DEPS.fs.existsSync(fullPath)) {
 			return next();
 		}
+
+		options = options || {};
 
 		function load (callback) {
 			if (/\.jsx$/.test(fullPath)) {
@@ -156,7 +172,10 @@ function Factory (CONTEXT) {
 				/\.js$/.test(fullPath) ||
 				/\.jsx$/.test(fullPath)
 			) {
-				data = transformJS(data, fullPath);
+
+				if (options.nodefs !== true) {
+					data = transformJS(data, fullPath);
+				}
 
 				res.writeHead(200, {
 					"Content-Type": "application/javascript"
@@ -167,6 +186,8 @@ function Factory (CONTEXT) {
 					"Content-Type": "text/html"
 				});
 			}
+
+			storeInDistribution (uri, data);
 
 			return res.end(data);
 		});
@@ -191,13 +212,13 @@ function Factory (CONTEXT) {
 			/\.js$/.test(path)
 		) {
 			return serveStaticFile(
+				"resources/" + req.params[0],
 				DEPS.path.join(__dirname, "../", packageBasePath, path),
 				res,
 				next
 			);
 		} else
 		if (
-			modulePackage === "jsonwebtoken" ||
 			modulePackage === "uuid"
 		) {
 			var fullPath = DEPS.path.join(__dirname, "../", packageBasePath, path);
@@ -211,6 +232,8 @@ function Factory (CONTEXT) {
 
 				data = transformJS(data.toString(), fullPath);
 
+				storeInDistribution ("resources/" + req.params[0], data);
+
 				res.writeHead(200, {
 					"Content-Type": "application/javascript"
 				});
@@ -218,10 +241,21 @@ function Factory (CONTEXT) {
 			});
 		}
 
+		return serveStaticFile(
+			"resources/" + req.params[0],
+			DEPS.path.join(__dirname, "..", packageBasePath, path),
+			res,
+			next,
+			{
+				nodefs: true
+			}
+		);
+/*
 		return DEPS.send(req, path, {
 			// TODO: We should be able to resolve this nicely via `CONTEXT`.
 			root: DEPS.path.join(__dirname, "..", packageBasePath)
 		}).on("error", next).pipe(res);
+*/
 	});
 
 	app.get(/^(?:\/)?\/components\/(.+)$/, function (req, res, next) {
@@ -240,6 +274,7 @@ function Factory (CONTEXT) {
 			/\.jsx$/.test(path)
 		) {
 			return serveStaticFile(
+				"components/" + req.params[0],
 				DEPS.path.join(__dirname, "../", packageBasePath, modulePackage, path),
 				res,
 				next
@@ -254,10 +289,18 @@ function Factory (CONTEXT) {
 
 	app.get(/^(?:\/)?\/runtime\/(.+)$/, function (req, res, next) {
 		return serveStaticFile(
+			"runtime/" + req.params[0],
 			DEPS.path.join(__dirname, "../", "runtime", req.params[0]),
 			res,
 			next
 		);
+	});
+
+	app.get(/^(?:\/)?\/build\/(.*)$/, function (req, res, next) {
+		var path = req.params[0] || "index.html";
+		return DEPS.send(req, path, {
+			root: DEPS.path.join(__dirname, "../build/dist")
+		}).on("error", next).pipe(res);
 	});
 
 	app.get(/^\/(system\.js|system\.src\.js|system-polyfills\.js)$/, function (req, res, next) {
@@ -276,6 +319,7 @@ function Factory (CONTEXT) {
 			/\.html?$/.test(path)
 		) {
 			return serveStaticFile(
+				path,
 				DEPS.path.join(__dirname, "../client", path),
 				res,
 				next
@@ -285,9 +329,6 @@ function Factory (CONTEXT) {
 		return DEPS.send(req, path, {
 			root: DEPS.path.join(__dirname, "../client")
 		}).on("error", next).pipe(res);
-
-		replaceVarsParser
-
 	});
 
 
@@ -303,7 +344,36 @@ function Factory (CONTEXT) {
 				server.listen(parseInt(CONFIG.port));
 			}
 
-			console.log("Server listening at: http://" + CONFIG.bind + ":" + CONFIG.port);
+			var baseUrl = "http://" + CONFIG.bind + ":" + CONFIG.port;
+
+			console.log("Server listening at: " + baseUrl);
+
+
+			DEPS.qfs.copy(
+				DEPS.path.join(__dirname, "../server/node_modules/systemjs/dist/system.src.js"),
+				DEPS.path.join(__dirname, "../build/dist", "system.src.js")
+			);
+
+			DEPS.qfs.copy(
+				DEPS.path.join(__dirname, "../server/node_modules/systemjs/dist/system-polyfills.js"),
+				DEPS.path.join(__dirname, "../build/dist", "system-polyfills.js")
+			);
+
+			return {
+				get: function (uri) {
+
+					var url = baseUrl + "/" + uri;
+
+					return new CONTEXT.DEPS.bluebird.Promise(function (resolve, reject) {
+
+						return DEPS.request(url, function (err, res, body) {
+							if (err) return reject(err);
+							if (res.statusCode !== 200) return reject(new Error("Got status '" + res.statusCode + "' while calling url '" + url + "'"));
+							return resolve(body);
+						});
+					});
+				}
+			}
 		}
 	}
 }
