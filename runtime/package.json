@@ -1,0 +1,9 @@
+{
+  "name": "runtime",
+  "private": true,
+  "dependencies": {
+    "es5-shim": "^4.1.10",
+    "console-polyfill": "^0.2.1",
+    "json3": "^3.3.2"
+  }
+}

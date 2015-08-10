@@ -21,4 +21,6 @@ P("typeof DEPS.react: " + typeof DEPS.react);
 
 	DEPS['HelloWorld'].init(DEPS.react);
 
+
+	return CONTEXT;
 }

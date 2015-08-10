@@ -26,7 +26,8 @@ const DEPS = {
 	'path': require('path'),
 	'fs': require('fs'),
 	'extend': require('extend'),
-	'bluebird': require('bluebird')
+	'bluebird': require('bluebird'),
+	'lodash': require('lodash')
 };
 
 
@@ -37,7 +38,8 @@ Context.prototype.wrap = function (instanceImplementationModule, instanceDescrip
 	var CONTEXT = this;
 
 	CONTEXT = Object.create(CONTEXT);
-	CONTEXT.API = Object.create(CONTEXT.API);
+	CONTEXT.API = Object.create(CONTEXT.API || {});
+	CONTEXT.DEPS = CONTEXT.DEPS || {};
 
 	if (instanceDescriptor.deps) {
 		instanceDescriptor.deps.forEach(function (name) {
@@ -49,7 +51,14 @@ Context.prototype.wrap = function (instanceImplementationModule, instanceDescrip
 		instanceImplementationModule.id
 	).replace(/\.[^\.]+$/, "");
 
-	CONTEXT.config = (CONTEXT.config["/" + layerId] || {});
+	CONTEXT.config = DEPS.lodash.merge(
+
+		// TODO: In production, only include the config keys actually used within
+		//       the context after running all code paths.
+		CONTEXT.config,
+
+		(CONTEXT.config["/" + layerId] || {})
+	);
 
 	if (CONTEXT.VERBOSE) console.info(("Init layer '" + layerId + "' with config: " + JSON.stringify(CONTEXT.config, null, 4)).info);
 
@@ -76,7 +85,10 @@ DEPS['bluebird'].attempt(function () {
 			"/02-Server": {
 				port: 8085,
 				bind: '127.0.0.1'
-			}
+			},
+			"github.com~systemjs/0/System.config": require(
+				DEPS.path.join(__dirname, '../client/package.json')
+			).config["github.com~systemjs/0/System.config"]
 		}
 
 	}));

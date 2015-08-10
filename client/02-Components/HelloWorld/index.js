@@ -14,7 +14,7 @@ exports.init = function (React) {
 
 	})['catch'](function (err) {
 
-		console.error (JSON.stringify(err));
+		console.error (err.stack || err);
 	});
 
 }

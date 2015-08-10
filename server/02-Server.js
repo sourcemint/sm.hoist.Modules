@@ -10,7 +10,8 @@ exports.for = function (CONTEXT) {
 			'morgan',
 			'defs',
 			'browserify',
-			'babel'
+			'babel',
+			'escape-regexp-component'
 		]
 	}, Factory);
 }
@@ -70,32 +71,51 @@ function Factory (CONTEXT) {
 
 	const CLIENT_PACKAGES = {
 
-		"console-polyfill": "client/01-System/node_modules/console-polyfill",
-		"es5-shim": "client/01-System/node_modules/es5-shim",
-		"html5shiv": "client/01-System/node_modules/html5shiv/dist",
-		"json": "client/01-System/node_modules/json3/lib",
-		"jquery": "client/01-System/node_modules/jquery/dist",
+		"console-polyfill": "runtime/node_modules/console-polyfill",
+		"es5-shim": "runtime/node_modules/es5-shim",
+		"html5shiv": "client/01-Libraries/node_modules/html5shiv/dist",
+		"json": "runtime/node_modules/json3/lib",
+		"jquery": "client/01-Libraries/node_modules/jquery/dist",
 		"bluebird": "server/node_modules/bluebird/js/browser",
 		"extend": "server/node_modules/extend",
-		"path": "client/01-System/node_modules/path-browserify",
+		"path": "client/01-Libraries/node_modules/path-browserify",
 
+		"runtime": "runtime",
 		"layer": "client",
 
-		"browser-builtins": "client/02-Libraries/node_modules/browser-builtins/builtin",
-		"lodash": "client/02-Libraries/node_modules/lodash-compat",
-		"canonical-json": "client/02-Libraries/node_modules/canonical-json",
-		"jsonwebtoken": "client/02-Libraries/node_modules/jsonwebtoken",
+		"browser-builtins": "client/01-Libraries/node_modules/browser-builtins/builtin",
+		"lodash": "client/01-Libraries/node_modules/lodash-compat",
+		"canonical-json": "client/01-Libraries/node_modules/canonical-json",
 		"forge": "server/node_modules/node-forge/js",
-		"jssha": "client/02-Libraries/node_modules/jssha/src",
-		"moment": "client/02-Libraries/node_modules/moment",
-		"numeral": "client/02-Libraries/node_modules/numeral",
-		"page": "client/02-Libraries/node_modules/page",
-		"uuid": "client/02-Libraries/node_modules/uuid",
-		"react": "client/02-Libraries/node_modules/react/dist"
+		"moment": "client/01-Libraries/node_modules/moment",
+		"numeral": "client/01-Libraries/node_modules/numeral",
+		"page": "client/01-Libraries/node_modules/page",
+		"uuid": "client/01-Libraries/node_modules/uuid",
+		"react": "client/01-Libraries/node_modules/react/dist"
 	};
 
 
-	function transformJS (data) {
+	function replaceVars (data, path) {
+
+		// Replace '{{config:*}}' variables.
+		// e.g. '{{config:github.com~systemjs/0/System.config}}'
+        var re = /\{\{config:([^\}]+)\}\}/g;
+        var m = null;
+        while (m = re.exec(data)) {
+        	if (typeof CONFIG[m[1]] === "undefined") {
+        		throw new Error("Config variable '" + m[1] + "' used in '" + path + "' not declared!");
+        	}
+        	data = data.replace(
+        		new RegExp(DEPS['escape-regexp-component'](m[0]), 'g'),
+        		JSON.stringify(CONFIG[m[1]], null, 4)
+        	);
+        }
+
+		return data;
+	}
+
+	function transformJS (data, path) {
+
 		data = DEPS.defs(data, {
 			"environments": [
 				"browser"
@@ -105,10 +125,11 @@ function Factory (CONTEXT) {
 			"disallowDuplicated": false,
 			"disallowUnknownReferences": false			
 		});
+
 		return data.src;
 	}
 
-	function serveStaticJsFile (fullPath, res, next) {
+	function serveStaticFile (fullPath, res, next) {
 		// TODO: Use async.
 		if (!DEPS.fs.existsSync(fullPath)) {
 			return next();
@@ -129,11 +150,24 @@ function Factory (CONTEXT) {
 		return load(function (err, data) {
 			if (err) return next(err);
 
-			data = transformJS(data);
+			data = replaceVars(data, fullPath);
 
-			res.writeHead(200, {
-				"Content-Type": "application/javascript"
-			});
+			if (
+				/\.js$/.test(fullPath) ||
+				/\.jsx$/.test(fullPath)
+			) {
+				data = transformJS(data, fullPath);
+
+				res.writeHead(200, {
+					"Content-Type": "application/javascript"
+				});
+			} else
+			if (/\.html?$/.test(fullPath)) {
+				res.writeHead(200, {
+					"Content-Type": "text/html"
+				});
+			}
+
 			return res.end(data);
 		});
 	}
@@ -156,7 +190,7 @@ function Factory (CONTEXT) {
 			modulePackage === "layer" &&
 			/\.js$/.test(path)
 		) {
-			return serveStaticJsFile(
+			return serveStaticFile(
 				DEPS.path.join(__dirname, "../", packageBasePath, path),
 				res,
 				next
@@ -175,7 +209,7 @@ function Factory (CONTEXT) {
 			return browserify.bundle(function (err, data) {
 				if (err) return next(err);
 
-				data = transformJS(data.toString());
+				data = transformJS(data.toString(), fullPath);
 
 				res.writeHead(200, {
 					"Content-Type": "application/javascript"
@@ -196,7 +230,7 @@ function Factory (CONTEXT) {
 		var modulePackage = moduleUri.split("/").shift();
 		moduleUri = moduleUri.split("/").splice(1).join("/");
 
-		var packageBasePath = "client/03-Components";
+		var packageBasePath = "client/02-Components";
 
 		var path = moduleUri;
 		if (CONTEXT.VERBOSE) console.log(("Loading module '" + moduleUri + "' for package '" + modulePackage + "' from '" + packageBasePath + "'").data);
@@ -205,7 +239,7 @@ function Factory (CONTEXT) {
 			/\.js$/.test(path) ||
 			/\.jsx$/.test(path)
 		) {
-			return serveStaticJsFile(
+			return serveStaticFile(
 				DEPS.path.join(__dirname, "../", packageBasePath, modulePackage, path),
 				res,
 				next
@@ -216,6 +250,14 @@ function Factory (CONTEXT) {
 			// TODO: We should be able to resolve this nicely via `CONTEXT`.
 			root: DEPS.path.join(__dirname, "..", packageBasePath)
 		}).on("error", next).pipe(res);
+	});
+
+	app.get(/^(?:\/)?\/runtime\/(.+)$/, function (req, res, next) {
+		return serveStaticFile(
+			DEPS.path.join(__dirname, "../", "runtime", req.params[0]),
+			res,
+			next
+		);
 	});
 
 	app.get(/^\/(system\.js|system\.src\.js|system-polyfills\.js)$/, function (req, res, next) {
@@ -229,8 +271,11 @@ function Factory (CONTEXT) {
 	app.get(/^\/(.*)$/, function (req, res, next) {
 		var path = req.params[0] || "index.html";
 
-		if (/\.js$/.test(path)) {
-			return serveStaticJsFile(
+		if (
+			/\.js$/.test(path) ||
+			/\.html?$/.test(path)
+		) {
+			return serveStaticFile(
 				DEPS.path.join(__dirname, "../client", path),
 				res,
 				next
@@ -240,6 +285,9 @@ function Factory (CONTEXT) {
 		return DEPS.send(req, path, {
 			root: DEPS.path.join(__dirname, "../client")
 		}).on("error", next).pipe(res);
+
+		replaceVarsParser
+
 	});
 
 

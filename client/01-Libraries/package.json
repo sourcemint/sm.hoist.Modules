@@ -2,9 +2,10 @@
   "name": "02-Libraries",
   "private": true,
   "dependencies": {
+    "browser-builtins": "^3.3.0",
+    "html5shiv": "^3.7.3",
+    "jquery": "^1.11.3",
     "canonical-json": "0.0.4",
-    "jsonwebtoken": "^5.0.4",
-    "jssha": "^2.0.1",
     "lodash-compat": "^3.10.1",
     "moment": "^2.10.6",
     "numeral": "^1.5.3",

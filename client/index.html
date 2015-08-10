@@ -6,7 +6,65 @@
 		<title></title>
 
 		<script src="system.src.js" type="text/javascript"></script>
-		<script src="01-System.js" type="text/javascript"></script>
+
+		<script type="text/javascript">
+
+			System.config({{config:github.com~systemjs/0/System.config}});
+
+			function logError (err) {
+				if (typeof window.console !== 'undefined') {
+					console.error("ERROR while loading layers:", (err.stack || err.message || err));
+				} else
+				if (typeof window.P === "function") {
+					window.P("ERROR while loading layers: " + (err.stack || err.message || err));
+				} else {
+					alert("ERROR while loading layers: " + (err.stack || err.message || err));
+				}
+			}
+
+			System['import']('runtime').then(function (runtime) {
+
+				return runtime.loadLayer('resources/layer/01-Libraries.js').then(function (systemFactoryApi) {
+
+					return systemFactoryApi['for'](new runtime.Context({
+
+						VERBOSE: true,
+						DEBUG: true
+
+					}));
+				}).then(function (librariesContext) {
+
+					return runtime.loadLayer('resources/layer/02-Components.js').then(function (factoryApi) {
+
+						return factoryApi['for'](new runtime.Context({
+
+							VERBOSE: librariesContext.VERBOSE,
+							DEBUG: librariesContext.DEBUG,
+
+							DEPS: librariesContext.DEPS,
+
+							API: librariesContext.API,
+
+							config: {
+								"/03-Components": {
+									foo: "bar 2"
+								}
+							}
+
+						}));
+
+					}).then(function (componentsContext) {
+
+
+P("All loaded OK!");
+
+					});
+				});
+
+			})['catch'](logError);
+
+		</script>
+
 	</head>
 	<body>
 

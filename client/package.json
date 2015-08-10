@@ -1,0 +1,93 @@
+{
+	"config": {
+		"github.com~systemjs/0/System.config": {
+			"transpiler": "babel",
+			"babelOptions": {
+
+			},
+			"packages": {
+
+				"runtime": {
+					"main": "client.js",					
+					"format": "cjs"
+				},
+
+				"resources/layer": {
+					"format": "cjs"
+				},
+
+				"components/HelloWorld": {
+					"main": "index.js",
+					"format": "cjs"
+				},
+
+				"resources/console-polyfill": {
+					"main": "index.js",
+					"format": "global"
+				},
+				"resources/es5-shim": {
+					"format": "global"
+				},
+				"resources/html5shiv": {
+					"main": "html5shiv.js",
+					"format": "global"
+				},
+				"resources/json": {
+					"main": "json3.js",
+					"format": "global"
+				},
+				"resources/lodash": {
+					"main": "index.js",
+					"format": "cjs"
+				},
+				"resources/jquery": {
+					"main": "jquery.js",
+					"format": "cjs"
+				},
+				"resources/bluebird": {
+					"main": "bluebird.js",
+					"format": "cjs"
+				},
+				"resources/extend": {
+					"main": "index.js",
+					"format": "cjs"
+				},
+				"resources/path": {
+					"main": "index.js",
+					"format": "cjs"
+				},
+				"resources/browser-builtins": {
+					"format": "cjs"
+				},
+				"resources/canonical-json": {
+					"main": "index.js",
+					"format": "cjs"
+				},
+				"resources/forge": {
+					"main": "forge.min.js",
+					"format": "amd"
+				},
+				"resources/moment": {
+					"main": "moment.js",
+					"format": "cjs"
+				},
+				"resources/numeral": {
+					"main": "numeral.js",
+					"format": "cjs"
+				},
+				"resources/page": {
+					"main": "page.js",
+					"format": "global"
+				},
+				"resources/uuid": {
+					"main": "uuid.js",
+					"format": "amd"
+				},
+				"resources/react": {
+					"main": "react.js",
+					"format": "global"
+				}
+			}
+		}
+	}
+}
